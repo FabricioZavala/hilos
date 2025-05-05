@@ -7,11 +7,16 @@
     "build": "tsc",
     "start": "http-server . -c-1"
   },
-  "keywords": ["concurrency", "typescript", "threads", "async"],
+  "keywords": [
+    "concurrency",
+    "typescript",
+    "threads",
+    "async"
+  ],
   "author": "Fabricioo",
   "license": "ISC",
   "devDependencies": {
-    "typescript": "^5.1.3",
-    "http-server": "^14.1.1"
+    "http-server": "^14.1.1",
+    "typescript": "^5.1.3"
   }
 }

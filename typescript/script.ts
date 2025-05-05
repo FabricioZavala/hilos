@@ -1,66 +1,172 @@
-const NUM_DISHES = 5;
+// Configuración inicial del simulador
+let NUMERO_PLATOS = 5;
+let lavados = 0;
+let secados = 0;
+let guardados = 0;
 
-let washed = 0;
-let dried  = 0;
-let stored = 0;
+// Historial de ejecuciones anteriores
+const historialEjecuciones: string[] = [];
 
-// Colas simples
-const qWashToDry: Array<null> = [];
-const qDryToStore: Array<null> = [];
+// Estas colas nos sirven para pasar platos entre las etapas
+const colaLavarASecar: Array<null> = [];
+const colaSecarAGuardar: Array<null> = [];
 
-const lblWashed  = document.getElementById("washed") as HTMLDivElement;
-const lblDried   = document.getElementById("dried")  as HTMLDivElement;
-const lblStored  = document.getElementById("stored") as HTMLDivElement;
-const lblElapsed = document.getElementById("elapsed") as HTMLDivElement;
-const btnStart   = document.getElementById("startBtn") as HTMLButtonElement;
+// Referencias a elementos del DOM
+const etqLavados = document.getElementById('lavados') as HTMLDivElement;
+const etqSecados = document.getElementById('secados') as HTMLDivElement;
+const etqGuardados = document.getElementById('guardados') as HTMLDivElement;
+const etqTiempo = document.getElementById(
+  'tiempoTranscurrido'
+) as HTMLDivElement;
+const botonIniciar = document.getElementById(
+  'botonIniciar'
+) as HTMLButtonElement;
+const botonReiniciar = document.getElementById(
+  'botonReiniciar'
+) as HTMLButtonElement;
+const entradaNumPlatos = document.getElementById(
+  'numPlatos'
+) as HTMLInputElement;
+const contenedorHistorial = document.getElementById(
+  'historial'
+) as HTMLDivElement;
 
-btnStart.addEventListener("click", async () => {
-  btnStart.disabled = true;
-  const startTime = performance.now();
+// Para monitorear el tiempo y actualizaciones
+let tiempoInicio: number = 0;
+let intervaloActualizacion: number | undefined;
 
-  // Ejecuta las tres funciones en “paralelo”
-  await Promise.all([washer(), dryer(), storer()]);
+// Configuración inicial
+botonIniciar.addEventListener('click', iniciarPipeline);
+botonReiniciar.addEventListener('click', reiniciarSimulacion);
 
-  const elapsed = (performance.now() - startTime) / 1000;
-  lblElapsed.textContent = `¡Finalizado en ${elapsed.toFixed(2)}s!`;
-  btnStart.disabled = false;
-});
+// Esta función inicia la simulación del pipeline
+async function iniciarPipeline() {
+  // Obtenemos el número de platos configurado
+  NUMERO_PLATOS = parseInt(entradaNumPlatos.value);
 
-async function washer(): Promise<void> {
-  for (let i = 0; i < NUM_DISHES; i++) {
-    await sleep(1000);           // simula lavar plato
-    washed++;
-    qWashToDry.push(null);       // encola
-    lblWashed.textContent = `Lavados: ${washed}`;
-  }
+  // Deshabilitamos botones y reiniciamos contadores
+  botonIniciar.disabled = true;
+  botonReiniciar.disabled = true;
+
+  // Reiniciamos contadores y limpiamos colas
+  lavados = 0;
+  secados = 0;
+  guardados = 0;
+  colaLavarASecar.length = 0;
+  colaSecarAGuardar.length = 0;
+
+  // Actualizamos las etiquetas para mostrar los contadores
+  etqLavados.textContent = `Lavados: ${lavados}`;
+  etqSecados.textContent = `Secados: ${secados}`;
+  etqGuardados.textContent = `Guardados: ${guardados}`;
+  etqTiempo.textContent = `Tiempo: 0.00s`;
+
+  // Guardamos el tiempo de inicio para medir cuánto tarda
+  tiempoInicio = performance.now();
+
+  // Iniciamos la actualización del reloj
+  iniciarActualizacionTiempo();
+
+  // Ejecutamos las tres funciones en "paralelo"
+  await Promise.all([lavador(), secador(), guardador()]);
+
+  // Calculamos y mostramos el tiempo final
+  const tiempoFinal = (performance.now() - tiempoInicio) / 1000;
+  etqTiempo.textContent = `¡Finalizado en ${tiempoFinal.toFixed(2)}s!`;
+
+  // Paramos las actualizaciones periódicas
+  if (intervaloActualizacion) clearInterval(intervaloActualizacion);
+
+  // Habilitamos el botón de reinicio
+  botonReiniciar.disabled = false;
+
+  // Guardamos esta ejecución en el historial
+  const nuevaEjecucion = `Ejecución ${
+    historialEjecuciones.length + 1
+  }: ${NUMERO_PLATOS} platos en ${tiempoFinal.toFixed(2)}s`;
+  historialEjecuciones.push(nuevaEjecucion);
+  actualizarHistorial();
 }
 
-async function dryer(): Promise<void> {
-  for (let i = 0; i < NUM_DISHES; i++) {
-    // espera a que haya algo en la cola
-    while (qWashToDry.length === 0) {
-      await sleep(100);
+// Esta función actualiza el tiempo transcurrido
+function iniciarActualizacionTiempo() {
+  if (intervaloActualizacion) clearInterval(intervaloActualizacion);
+
+  intervaloActualizacion = setInterval(() => {
+    const tiempoActual = (performance.now() - tiempoInicio) / 1000;
+    etqTiempo.textContent = `Tiempo: ${tiempoActual.toFixed(2)}s`;
+
+    // Si ya terminaron todas las etapas, detenemos la actualización
+    if (guardados >= NUMERO_PLATOS) {
+      clearInterval(intervaloActualizacion);
     }
-    qWashToDry.shift();
-    await sleep(1000);           // simula secar plato
-    dried++;
-    qDryToStore.push(null);
-    lblDried.textContent = `Secados:  ${dried}`;
+  }, 200);
+}
+
+// Este trabajador se encarga de lavar los platos
+async function lavador(): Promise<void> {
+  for (let i = 0; i < NUMERO_PLATOS; i++) {
+    await dormir(1000); // Tarda 1 segundo en lavar cada plato
+    lavados++;
+    colaLavarASecar.push(null); // Pasa el plato al secador
+    etqLavados.textContent = `Lavados: ${lavados}`;
   }
 }
 
-async function storer(): Promise<void> {
-  for (let i = 0; i < NUM_DISHES; i++) {
-    while (qDryToStore.length === 0) {
-      await sleep(100);
+// Este trabajador se encarga de secar los platos
+async function secador(): Promise<void> {
+  for (let i = 0; i < NUMERO_PLATOS; i++) {
+    // Espera a que haya un plato lavado disponible
+    while (colaLavarASecar.length === 0) {
+      await dormir(100);
     }
-    qDryToStore.shift();
-    await sleep(1000);           // simula guardar plato
-    stored++;
-    lblStored.textContent = `Guardados: ${stored}`;
+    colaLavarASecar.shift();
+    await dormir(1200); // Tarda 1.2 segundos en secar cada plato
+    secados++;
+    colaSecarAGuardar.push(null); // Pasa el plato al guardador
+    etqSecados.textContent = `Secados: ${secados}`;
   }
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise(res => setTimeout(res, ms));
+// Este trabajador se encarga de guardar los platos
+async function guardador(): Promise<void> {
+  for (let i = 0; i < NUMERO_PLATOS; i++) {
+    // Espera a que haya un plato seco disponible
+    while (colaSecarAGuardar.length === 0) {
+      await dormir(100);
+    }
+    colaSecarAGuardar.shift();
+    await dormir(800); // Tarda 0.8 segundos en guardar cada plato
+    guardados++;
+    etqGuardados.textContent = `Guardados: ${guardados}`;
+  }
+}
+
+// Esta función hace que el programa espere un tiempo
+function dormir(ms: number): Promise<void> {
+  return new Promise((resolver) => setTimeout(resolver, ms));
+}
+
+// Esta función limpia la simulación para empezar de nuevo
+function reiniciarSimulacion() {
+  // Reiniciamos contadores visualmente
+  etqLavados.textContent = `Lavados: 0`;
+  etqSecados.textContent = `Secados: 0`;
+  etqGuardados.textContent = `Guardados: 0`;
+  etqTiempo.textContent = `Tiempo: 0.00s`;
+
+  // Habilitamos el botón de inicio
+  botonIniciar.disabled = false;
+  botonReiniciar.disabled = true;
+}
+
+// Actualizamos el historial de ejecuciones en la página
+function actualizarHistorial() {
+  contenedorHistorial.innerHTML = '';
+  historialEjecuciones.forEach((ejecucion) => {
+    const elemento = document.createElement('div');
+    elemento.textContent = ejecucion;
+    elemento.style.marginBottom = '5px';
+    contenedorHistorial.appendChild(elemento);
+  });
 }

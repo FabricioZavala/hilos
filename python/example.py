@@ -7,263 +7,243 @@ import psutil
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-class DishPipelineApp:
-    def __init__(self, root):
-        self.root = root
-        root.title("Simulador de Pipeline de Platos")
-        root.geometry("800x600")
+class AplicacionPipelinePlatos:
+    def __init__(self, raiz):
+        self.raiz = raiz
+        raiz.title("Simulador de Pipeline de Platos")
+        raiz.geometry("800x600")
         
-        # Estilo
-        style = ttk.Style()
-        style.configure("TButton", font=("Arial", 10, "bold"))
-        style.configure("TLabel", font=("Arial", 10))
-        style.configure("Title.TLabel", font=("Arial", 12, "bold"))
+        # Mejoramos el aspecto visual de los botones y textos
+        estilo = ttk.Style()
+        estilo.configure("TButton", font=("Arial", 10, "bold"))
+        estilo.configure("TLabel", font=("Arial", 10))
+        estilo.configure("Title.TLabel", font=("Arial", 12, "bold"))
         
-        # Variables
-        self.NUM_DISHES = 5
-        self.washed = 0
-        self.dried = 0
-        self.stored = 0
-        self.execution_history = []
-        self.cpu_usage = []
-        self.time_points = []
+        # Variables para llevar el control de nuestro proceso
+        self.NUMERO_PLATOS = 5
+        self.lavados = 0
+        self.secados = 0
+        self.guardados = 0
+        self.historial_ejecuciones = []
+        self.uso_cpu = []
+        self.puntos_tiempo = []
         
-        # Queues entre etapas
-        self.q_wash_to_dry = queue.Queue()
-        self.q_dry_to_store = queue.Queue()
+        # Estas colas nos sirven para pasar los platos de una etapa a otra
+        self.cola_lavar_a_secar = queue.Queue()
+        self.cola_secar_a_guardar = queue.Queue()
         
-        # Frame principal
-        main_frame = ttk.Frame(root, padding="10")
-        main_frame.pack(fill=tk.BOTH, expand=True)
+        # Panel principal que contendrá toda la interfaz
+        marco_principal = ttk.Frame(raiz, padding="10")
+        marco_principal.pack(fill=tk.BOTH, expand=True)
         
-        # Frame izquierdo para controles
-        left_frame = ttk.Frame(main_frame, padding="10")
-        left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
+        # Panel izquierdo para los controles y configuración
+        panel_izquierdo = ttk.Frame(marco_principal, padding="10")
+        panel_izquierdo.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
         
-        # Título de la simulación
-        title_lbl = ttk.Label(left_frame, text="Pipeline de Procesamiento de Platos", style="Title.TLabel")
-        title_lbl.pack(pady=(0, 20))
+        # Título del programa
+        etiqueta_titulo = ttk.Label(panel_izquierdo, text="Pipeline de Procesamiento de Platos", style="Title.TLabel")
+        etiqueta_titulo.pack(pady=(0, 20))
         
-        # Configuración
-        config_frame = ttk.LabelFrame(left_frame, text="Configuración", padding="10")
-        config_frame.pack(fill=tk.X, pady=(0, 10))
+        # Sección donde configuramos cuántos platos queremos procesar
+        marco_config = ttk.LabelFrame(panel_izquierdo, text="Configuración", padding="10")
+        marco_config.pack(fill=tk.X, pady=(0, 10))
         
-        ttk.Label(config_frame, text="Cantidad de platos:").pack(anchor=tk.W)
+        ttk.Label(marco_config, text="Cantidad de platos:").pack(anchor=tk.W)
         
-        self.dishes_var = tk.StringVar(value="5")
-        self.dishes_entry = ttk.Spinbox(config_frame, from_=1, to=20, textvariable=self.dishes_var, width=5)
-        self.dishes_entry.pack(anchor=tk.W, pady=(0, 10))
+        self.var_platos = tk.StringVar(value="5")
+        self.entrada_platos = ttk.Spinbox(marco_config, from_=1, to=20, textvariable=self.var_platos, width=5)
+        self.entrada_platos.pack(anchor=tk.W, pady=(0, 10))
         
-        # Indicadores de proceso
-        process_frame = ttk.LabelFrame(left_frame, text="Estado del Proceso", padding="10")
-        process_frame.pack(fill=tk.X, pady=(0, 10))
+        # Sección que muestra el progreso del lavado, secado y guardado
+        marco_proceso = ttk.LabelFrame(panel_izquierdo, text="Estado del Proceso", padding="10")
+        marco_proceso.pack(fill=tk.X, pady=(0, 10))
         
-        self.lbl_wash = ttk.Label(process_frame, text="Lavados: 0")
-        self.lbl_dry = ttk.Label(process_frame, text="Secados: 0")
-        self.lbl_store = ttk.Label(process_frame, text="Guardados: 0")
-        self.lbl_time = ttk.Label(process_frame, text="Tiempo: 0.00s")
-        self.lbl_cpu = ttk.Label(process_frame, text="CPU: 0.0%")
+        self.etq_lavado = ttk.Label(marco_proceso, text="Lavados: 0")
+        self.etq_secado = ttk.Label(marco_proceso, text="Secados: 0")
+        self.etq_guardado = ttk.Label(marco_proceso, text="Guardados: 0")
+        self.etq_tiempo = ttk.Label(marco_proceso, text="Tiempo: 0.00s")
+        self.etq_cpu = ttk.Label(marco_proceso, text="CPU: 0.0%")
         
-        self.lbl_wash.pack(anchor=tk.W, pady=2)
-        self.lbl_dry.pack(anchor=tk.W, pady=2)
-        self.lbl_store.pack(anchor=tk.W, pady=2)
-        self.lbl_time.pack(anchor=tk.W, pady=2)
-        self.lbl_cpu.pack(anchor=tk.W, pady=2)
+        self.etq_lavado.pack(anchor=tk.W, pady=2)
+        self.etq_secado.pack(anchor=tk.W, pady=2)
+        self.etq_guardado.pack(anchor=tk.W, pady=2)
+        self.etq_tiempo.pack(anchor=tk.W, pady=2)
+        self.etq_cpu.pack(anchor=tk.W, pady=2)
         
-        # Controles
-        control_frame = ttk.Frame(left_frame)
-        control_frame.pack(pady=10)
+        # Botones para iniciar y reiniciar la simulación
+        marco_control = ttk.Frame(panel_izquierdo)
+        marco_control.pack(pady=10)
         
-        self.btn_start = ttk.Button(control_frame, text="Iniciar Pipeline", command=self.start_pipeline)
-        self.btn_reset = ttk.Button(control_frame, text="Reiniciar", command=self.reset_simulation, state="disabled")
+        self.boton_iniciar = ttk.Button(marco_control, text="Iniciar Pipeline", command=self.iniciar_pipeline)
+        self.boton_reiniciar = ttk.Button(marco_control, text="Reiniciar", command=self.reiniciar_simulacion, state="disabled")
         
-        self.btn_start.grid(row=0, column=0, padx=5)
-        self.btn_reset.grid(row=0, column=1, padx=5)
+        self.boton_iniciar.grid(row=0, column=0, padx=5)
+        self.boton_reiniciar.grid(row=0, column=1, padx=5)
         
-        # Frame derecho para gráficas y resultados
-        right_frame = ttk.Frame(main_frame, padding="10")
-        right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
+        # Panel derecho para la gráfica y el historial
+        panel_derecho = ttk.Frame(marco_principal, padding="10")
+        panel_derecho.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
-        # Espacio para la gráfica
-        self.graph_frame = ttk.LabelFrame(right_frame, text="Uso de CPU en Tiempo Real", padding="10")
-        self.graph_frame.pack(fill=tk.BOTH, expand=True)
+        # Espacio para mostrar la gráfica de uso del CPU
+        self.marco_grafica = ttk.LabelFrame(panel_derecho, text="Uso de CPU en Tiempo Real", padding="10")
+        self.marco_grafica.pack(fill=tk.BOTH, expand=True)
         
-        # Historial de ejecuciones
-        history_frame = ttk.LabelFrame(right_frame, text="Historial de Ejecuciones", padding="10")
-        history_frame.pack(fill=tk.X, expand=False, pady=(10, 0))
+        # Espacio para mostrar el historial de ejecuciones anteriores
+        marco_historial = ttk.LabelFrame(panel_derecho, text="Historial de Ejecuciones", padding="10")
+        marco_historial.pack(fill=tk.X, expand=False, pady=(10, 0))
         
-        self.history_text = tk.Text(history_frame, height=6, width=40)
-        self.history_text.pack(fill=tk.BOTH, expand=True)
-        self.history_text.config(state="disabled")
+        self.texto_historial = tk.Text(marco_historial, height=6, width=40)
+        self.texto_historial.pack(fill=tk.BOTH, expand=True)
+        self.texto_historial.config(state="disabled")
         
-        # Preparar gráfico
-        self.setup_graph()
-        
-        # Mostrar explicación
-        self.show_help_info()
+        # Preparamos la gráfica inicial que mostrará el uso de CPU
+        self.configurar_grafica()
     
-    def setup_graph(self):
-        self.figure, self.ax = plt.subplots(figsize=(5, 3))
-        self.ax.set_ylim(0, 100)
-        self.ax.set_xlabel('Tiempo (s)')
-        self.ax.set_ylabel('CPU (%)')
-        self.ax.set_title('Uso de CPU')
-        self.ax.grid(True)
+    def configurar_grafica(self):
+        # Preparamos una gráfica vacía para mostrar después el uso de CPU
+        self.figura, self.eje = plt.subplots(figsize=(5, 3))
+        self.eje.set_ylim(0, 100)
+        self.eje.set_xlabel('Tiempo (s)')
+        self.eje.set_ylabel('CPU (%)')
+        self.eje.set_title('Uso de CPU')
+        self.eje.grid(True)
         
-        self.canvas = FigureCanvasTkAgg(self.figure, master=self.graph_frame)
-        self.canvas.draw()
-        self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+        # Colocamos la gráfica en la ventana
+        self.lienzo = FigureCanvasTkAgg(self.figura, master=self.marco_grafica)
+        self.lienzo.draw()
+        self.lienzo.get_tk_widget().pack(fill=tk.BOTH, expand=True)
     
-    def show_help_info(self):
-        help_window = tk.Toplevel(self.root)
-        help_window.title("Información sobre Hilos")
-        help_window.geometry("500x300")
+    def iniciar_pipeline(self):
+        # Tomamos el número de platos que el usuario eligió
+        self.NUMERO_PLATOS = int(self.var_platos.get())
+        self.boton_iniciar.config(state="disabled")
+        self.boton_reiniciar.config(state="disabled")
         
-        info_text = """
-        # Simulador de Pipeline con Hilos
-
-        Esta aplicación demuestra el uso de hilos (threads) en Python para:
+        # Ponemos los contadores a cero para empezar de nuevo
+        self.lavados = 0
+        self.secados = 0
+        self.guardados = 0
         
-        1. **Paralelismo**: Cada etapa del proceso (lavar, secar, guardar) 
-           se ejecuta en un hilo separado.
-        
-        2. **Sincronización**: Las colas (Queues) permiten la comunicación 
-           segura entre hilos.
-        
-        3. **Comunicación entre procesos**: Los datos fluyen de un hilo a otro 
-           de forma ordenada.
-        
-        La gráfica muestra el uso de CPU para visualizar cómo los hilos 
-        consumen recursos del sistema mientras se ejecutan concurrentemente.
-        """
-        
-        help_text = tk.Text(help_window, wrap=tk.WORD, padx=15, pady=15)
-        help_text.pack(fill=tk.BOTH, expand=True)
-        help_text.insert(tk.END, info_text)
-        help_text.config(state="disabled")
-    
-    def start_pipeline(self):
-        self.NUM_DISHES = int(self.dishes_var.get())
-        self.btn_start.config(state="disabled")
-        self.btn_reset.config(state="disabled")
-        
-        # Reiniciar contadores
-        self.washed = 0
-        self.dried = 0
-        self.stored = 0
-        
-        # Limpiar colas por si acaso
-        while not self.q_wash_to_dry.empty():
-            self.q_wash_to_dry.get()
-        while not self.q_dry_to_store.empty():
-            self.q_dry_to_store.get()
+        # Vaciamos las colas por si quedó algo de antes
+        while not self.cola_lavar_a_secar.empty():
+            self.cola_lavar_a_secar.get()
+        while not self.cola_secar_a_guardar.empty():
+            self.cola_secar_a_guardar.get()
             
-        # Resetear gráfica
-        self.cpu_usage = []
-        self.time_points = []
-        self.ax.clear()
-        self.ax.set_ylim(0, 100)
-        self.ax.set_xlabel('Tiempo (s)')
-        self.ax.set_ylabel('CPU (%)')
-        self.ax.set_title('Uso de CPU durante el Pipeline')
-        self.ax.grid(True)
+        # Limpiamos la gráfica para la nueva ejecución
+        self.uso_cpu = []
+        self.puntos_tiempo = []
+        self.eje.clear()
+        self.eje.set_ylim(0, 100)
+        self.eje.set_xlabel('Tiempo (s)')
+        self.eje.set_ylabel('CPU (%)')
+        self.eje.set_title('Uso de CPU durante el Pipeline')
+        self.eje.grid(True)
         
-        self.start_time = time.time()
+        # Guardamos el tiempo en que iniciamos para medir cuánto tardamos
+        self.tiempo_inicio = time.time()
         
-        # Iniciar hilos
-        threading.Thread(target=self.washer, daemon=True).start()
-        threading.Thread(target=self.dryer, daemon=True).start()
-        threading.Thread(target=self.storer, daemon=True).start()
+        # Iniciamos tres trabajadores (hilos) uno para cada tarea
+        threading.Thread(target=self.lavador, daemon=True).start()
+        threading.Thread(target=self.secador, daemon=True).start()
+        threading.Thread(target=self.guardador, daemon=True).start()
         
-        # Iniciar monitoreo
-        self.update_clock()
-        self.monitor_cpu()
+        # Iniciamos las funciones que actualizan lo que vemos
+        self.actualizar_reloj()
+        self.monitorear_cpu()
     
-    def washer(self):
-        for i in range(self.NUM_DISHES):
-            time.sleep(1)  # Simula lavar un plato
-            self.washed += 1
-            self.q_wash_to_dry.put("plato")
-            self.lbl_wash.config(text=f"Lavados: {self.washed}")
+    def lavador(self):
+        # Este trabajador se encarga de lavar los platos
+        for i in range(self.NUMERO_PLATOS):
+            time.sleep(1)  # Tarda 1 segundo en lavar cada plato
+            self.lavados += 1
+            self.cola_lavar_a_secar.put("plato")  # Pasa el plato al secador
+            self.etq_lavado.config(text=f"Lavados: {self.lavados}")
     
-    def dryer(self):
-        for _ in range(self.NUM_DISHES):
-            self.q_wash_to_dry.get()  # Espera un plato lavado
-            time.sleep(1.2)  # Simula secar plato (un poco más lento)
-            self.dried += 1
-            self.q_dry_to_store.put("plato")
-            self.lbl_dry.config(text=f"Secados: {self.dried}")
+    def secador(self):
+        # Este trabajador se encarga de secar los platos
+        for _ in range(self.NUMERO_PLATOS):
+            self.cola_lavar_a_secar.get()  # Espera a recibir un plato lavado
+            time.sleep(1.2)  # Tarda 1.2 segundos en secar cada plato
+            self.secados += 1
+            self.cola_secar_a_guardar.put("plato")  # Pasa el plato al guardador
+            self.etq_secado.config(text=f"Secados: {self.secados}")
     
-    def storer(self):
-        for _ in range(self.NUM_DISHES):
-            self.q_dry_to_store.get()  # Espera un plato seco
-            time.sleep(0.8)  # Simula guardar plato (un poco más rápido)
-            self.stored += 1
-            self.lbl_store.config(text=f"Guardados: {self.stored}")
+    def guardador(self):
+        # Este trabajador se encarga de guardar los platos
+        for _ in range(self.NUMERO_PLATOS):
+            self.cola_secar_a_guardar.get()  # Espera a recibir un plato seco
+            time.sleep(0.8)  # Tarda 0.8 segundos en guardar cada plato
+            self.guardados += 1
+            self.etq_guardado.config(text=f"Guardados: {self.guardados}")
     
-    def update_clock(self):
-        elapsed = time.time() - self.start_time
-        self.lbl_time.config(text=f"Tiempo: {elapsed:.2f}s")
+    def actualizar_reloj(self):
+        # Actualizamos el tiempo que ha pasado desde que iniciamos
+        tiempo_transcurrido = time.time() - self.tiempo_inicio
+        self.etq_tiempo.config(text=f"Tiempo: {tiempo_transcurrido:.2f}s")
         
-        if self.stored < self.NUM_DISHES:
-            # Sigue actualizando mientras no termine
-            self.root.after(100, self.update_clock)
+        if self.guardados < self.NUMERO_PLATOS:
+            # Si aún no terminamos todos los platos, seguimos actualizando
+            self.raiz.after(100, self.actualizar_reloj)
         else:
-            final_time = elapsed
-            # Añadir al historial
-            self.btn_reset.config(state="normal")
-            self.lbl_time.config(text=f"¡Finalizado en {final_time:.2f}s!")
+            # Si ya terminamos, mostramos el resultado final
+            tiempo_final = tiempo_transcurrido
+            self.boton_reiniciar.config(state="normal")
+            self.etq_tiempo.config(text=f"¡Finalizado en {tiempo_final:.2f}s!")
             
-            # Actualizar historial
-            self.execution_history.append(
-                f"Ejecución: {len(self.execution_history)+1} - {self.NUM_DISHES} platos en {final_time:.2f}s"
+            # Guardamos esta ejecución en el historial
+            self.historial_ejecuciones.append(
+                f"Ejecución: {len(self.historial_ejecuciones)+1} - {self.NUMERO_PLATOS} platos en {tiempo_final:.2f}s"
             )
-            self.update_history_text()
+            self.actualizar_texto_historial()
     
-    def monitor_cpu(self):
-        if self.stored < self.NUM_DISHES:
-            cpu = psutil.cpu_percent()
-            self.lbl_cpu.config(text=f"CPU: {cpu:.1f}%")
+    def monitorear_cpu(self):
+        # Revisamos cuánta CPU se está usando mientras corre la simulación
+        if self.guardados < self.NUMERO_PLATOS:
+            uso = psutil.cpu_percent()
+            self.etq_cpu.config(text=f"CPU: {uso:.1f}%")
             
-            # Actualizar gráfica
-            elapsed = time.time() - self.start_time
-            self.time_points.append(elapsed)
-            self.cpu_usage.append(cpu)
+            # Añadimos un punto a la gráfica
+            tiempo_transcurrido = time.time() - self.tiempo_inicio
+            self.puntos_tiempo.append(tiempo_transcurrido)
+            self.uso_cpu.append(uso)
             
-            self.ax.clear()
-            self.ax.set_ylim(0, 100)
-            self.ax.plot(self.time_points, self.cpu_usage, 'b-')
-            self.ax.set_xlabel('Tiempo (s)')
-            self.ax.set_ylabel('CPU (%)')
-            self.ax.set_title('Uso de CPU durante el Pipeline')
-            self.ax.grid(True)
-            self.canvas.draw()
+            # Actualizamos la gráfica con el nuevo punto
+            self.eje.clear()
+            self.eje.set_ylim(0, 100)
+            self.eje.plot(self.puntos_tiempo, self.uso_cpu, 'b-')
+            self.eje.set_xlabel('Tiempo (s)')
+            self.eje.set_ylabel('CPU (%)')
+            self.eje.set_title('Uso de CPU durante el Pipeline')
+            self.eje.grid(True)
+            self.lienzo.draw()
             
-            # Seguir monitoreando
-            self.root.after(500, self.monitor_cpu)
+            # Seguimos monitoreando cada medio segundo
+            self.raiz.after(500, self.monitorear_cpu)
     
-    def update_history_text(self):
-        self.history_text.config(state="normal")
-        self.history_text.delete(1.0, tk.END)
-        for entry in self.execution_history:
-            self.history_text.insert(tk.END, entry + "\n")
-        self.history_text.config(state="disabled")
+    def actualizar_texto_historial(self):
+        # Actualizamos la caja de texto con el historial de ejecuciones
+        self.texto_historial.config(state="normal")
+        self.texto_historial.delete(1.0, tk.END)
+        for entrada in self.historial_ejecuciones:
+            self.texto_historial.insert(tk.END, entrada + "\n")
+        self.texto_historial.config(state="disabled")
     
-    def reset_simulation(self):
-        # Reiniciar contadores visualmente
-        self.lbl_wash.config(text="Lavados: 0")
-        self.lbl_dry.config(text="Secados: 0")
-        self.lbl_store.config(text="Guardados: 0")
-        self.lbl_time.config(text="Tiempo: 0.00s")
-        self.lbl_cpu.config(text="CPU: 0.0%")
+    def reiniciar_simulacion(self):
+        # Preparamos todo para poder iniciar una nueva simulación
+        self.etq_lavado.config(text="Lavados: 0")
+        self.etq_secado.config(text="Secados: 0")
+        self.etq_guardado.config(text="Guardados: 0")
+        self.etq_tiempo.config(text="Tiempo: 0.00s")
+        self.etq_cpu.config(text="CPU: 0.0%")
         
-        # Habilitar inicio
-        self.btn_start.config(state="normal")
-        self.btn_reset.config(state="disabled")
+        # Activamos el botón de inicio y desactivamos el de reinicio
+        self.boton_iniciar.config(state="normal")
+        self.boton_reiniciar.config(state="disabled")
 
 if __name__ == "__main__":
-    # Se requiere instalar: matplotlib, psutil
-    # pip install matplotlib psutil
-    root = tk.Tk()
-    app = DishPipelineApp(root)
-    root.mainloop()
+    # Este programa muestra cómo funciona un pipeline con hilos
+    # simulando el proceso de lavar, secar y guardar platos
+    raiz = tk.Tk()
+    app = AplicacionPipelinePlatos(raiz)
+    raiz.mainloop()
