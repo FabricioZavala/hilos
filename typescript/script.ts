@@ -39,9 +39,8 @@ let intervaloActualizacion: number | undefined;
 botonIniciar.addEventListener('click', iniciarPipeline);
 botonReiniciar.addEventListener('click', reiniciarSimulacion);
 
-// Esta función inicia la simulación del pipeline
+// Esta función inicia la simulación 
 async function iniciarPipeline() {
-  // Obtenemos el número de platos configurado
   NUMERO_PLATOS = parseInt(entradaNumPlatos.value);
 
   // Deshabilitamos botones y reiniciamos contadores
@@ -160,7 +159,6 @@ function reiniciarSimulacion() {
   botonReiniciar.disabled = true;
 }
 
-// Actualizamos el historial de ejecuciones en la página
 function actualizarHistorial() {
   contenedorHistorial.innerHTML = '';
   historialEjecuciones.forEach((ejecucion) => {

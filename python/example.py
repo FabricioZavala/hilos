@@ -10,7 +10,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 class AplicacionPipelinePlatos:
     def __init__(self, raiz):
         self.raiz = raiz
-        raiz.title("Simulador de Pipeline de Platos")
+        raiz.title("Simulador de lavado de Platos")
         raiz.geometry("800x600")
         
         # Mejoramos el aspecto visual de los botones y textos
@@ -41,7 +41,7 @@ class AplicacionPipelinePlatos:
         panel_izquierdo.pack(side=tk.LEFT, fill=tk.BOTH, expand=False)
         
         # Título del programa
-        etiqueta_titulo = ttk.Label(panel_izquierdo, text="Pipeline de Procesamiento de Platos", style="Title.TLabel")
+        etiqueta_titulo = ttk.Label(panel_izquierdo, text="Simulador de lavadps de Platos", style="Title.TLabel")
         etiqueta_titulo.pack(pady=(0, 20))
         
         # Sección donde configuramos cuántos platos queremos procesar
@@ -74,7 +74,7 @@ class AplicacionPipelinePlatos:
         marco_control = ttk.Frame(panel_izquierdo)
         marco_control.pack(pady=10)
         
-        self.boton_iniciar = ttk.Button(marco_control, text="Iniciar Pipeline", command=self.iniciar_pipeline)
+        self.boton_iniciar = ttk.Button(marco_control, text="Iniciar", command=self.iniciar_pipeline)
         self.boton_reiniciar = ttk.Button(marco_control, text="Reiniciar", command=self.reiniciar_simulacion, state="disabled")
         
         self.boton_iniciar.grid(row=0, column=0, padx=5)
@@ -137,7 +137,7 @@ class AplicacionPipelinePlatos:
         self.eje.set_ylim(0, 100)
         self.eje.set_xlabel('Tiempo (s)')
         self.eje.set_ylabel('CPU (%)')
-        self.eje.set_title('Uso de CPU durante el Pipeline')
+        self.eje.set_title('Uso de CPU')
         self.eje.grid(True)
         
         # Guardamos el tiempo en que iniciamos para medir cuánto tardamos
@@ -214,7 +214,7 @@ class AplicacionPipelinePlatos:
             self.eje.plot(self.puntos_tiempo, self.uso_cpu, 'b-')
             self.eje.set_xlabel('Tiempo (s)')
             self.eje.set_ylabel('CPU (%)')
-            self.eje.set_title('Uso de CPU durante el Pipeline')
+            self.eje.set_title('Uso de CPU ')
             self.eje.grid(True)
             self.lienzo.draw()
             
