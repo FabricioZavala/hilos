@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Lavar → Secar → Guardar Platos (TS)</title>
+  <style>
+    body { font-family: sans-serif; padding: 2rem; }
+    .counter { margin: .5rem 0; }
+    button { padding: .5rem 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Lavar → Secar → Guardar Platos</h1>
+  <div class="counter" id="washed">Lavados: 0</div>
+  <div class="counter" id="dried">Secados:  0</div>
+  <div class="counter" id="stored">Guardados: 0</div>
+  <div class="counter" id="elapsed">Tiempo transcurrido: 0.00s</div>
+  <button id="startBtn">Iniciar pipeline</button>
+
+  <!-- Apunta al bundle compilado -->
+  <script type="module" src="./dist/script.js"></script>
+</body>
+</html>

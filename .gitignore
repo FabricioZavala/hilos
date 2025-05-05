@@ -1,0 +1,12 @@
+# Python
+__pycache__/
+*.py[cod]
+.vscode/
+
+# Node / TypeScript
+node_modules/
+dist/
+.DS_Store
+.env
+*.log
+package-lock.json
