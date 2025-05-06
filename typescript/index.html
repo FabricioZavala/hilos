@@ -3,93 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <title>Simulador de Platos</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 1000px;
-        margin: 0 auto;
-        padding: 2rem;
-        color: #333;
-      }
-      .container {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-      }
-      .panel {
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-        background-color: #f9f9f9;
-      }
-      .panel-left {
-        flex: 1;
-        min-width: 300px;
-      }
-      .panel-right {
-        flex: 1;
-        min-width: 300px;
-      }
-      h1 {
-        color: #2c3e50;
-        margin-bottom: 1.5rem;
-      }
-      h2 {
-        color: #3498db;
-        font-size: 1.2rem;
-        margin-top: 0;
-        margin-bottom: 1rem;
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #eee;
-      }
-      .counter {
-        margin: 0.8rem 0;
-        font-size: 1.1rem;
-      }
-      #historial {
-        height: 250px;
-        overflow-y: auto;
-        border: 1px solid #ddd;
-        padding: 10px;
-        border-radius: 5px;
-        background-color: #fff;
-      }
-      button {
-        padding: 0.7rem 1.2rem;
-        margin-right: 0.5rem;
-        background-color: #3498db;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: background-color 0.2s;
-      }
-      button:hover {
-        background-color: #2980b9;
-      }
-      button:disabled {
-        background-color: #95a5a6;
-        cursor: not-allowed;
-      }
-      .config-item {
-        margin-bottom: 1rem;
-      }
-      label {
-        display: block;
-        margin-bottom: 0.5rem;
-      }
-      input {
-        padding: 0.5rem;
-        width: 60px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-      }
-    </style>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <h1>Simulador de Platos</h1>
+    <h1>Simulador de Lavado de Platos</h1>
 
     <div class="container">
       <div class="panel panel-left">
@@ -113,12 +30,17 @@
           <button id="botonIniciar">Iniciar</button>
           <button id="botonReiniciar" disabled>Reiniciar</button>
         </div>
+
+        <div class="panel">
+          <h2>Historial de Ejecuciones</h2>
+          <div id="historial"></div>
+        </div>
       </div>
 
       <div class="panel panel-right">
         <div class="panel">
-          <h2>Historial de Ejecuciones</h2>
-          <div id="historial"></div>
+          <h2>Log de Actividad</h2>
+          <div id="log"></div>
         </div>
       </div>
     </div>
